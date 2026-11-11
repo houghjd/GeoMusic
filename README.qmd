@@ -1,0 +1,57 @@
+---
+title: "Capitol Bikeshare App"
+format: html
+editor: visual
+---
+
+This Shiny app visualizes the number of bicycles that were available throughout the day at various Washington D.C. Capitol Bikeshare stations on May 14, 2022. To see a more sophisticated version of this app that includes a predictive model and has been orchestrated for production deployment, visit [Bike Prediction](https://solutions.posit.co/gallery/bike_predict/).
+
+## To preview the app
+
+To run the app:
+
+1.  Open the file `app.R`.
+2.  Then click the Run App button that will appear above the opened file.
+
+## To publish the app to Cloud
+
+To publish the app to Cloud:
+
+1.  Open the file `app.R`.
+2.  Click the blue publish icon that will appear next to the right of the Run App button.
+3.  Complete and submit the dialog that appears.
+
+Your published app will appear in another browser tab, where you can interact with it.
+
+It will also get added as a new content item to Your Workspace. You can see it listed there by clicking the Your Workspace link in the header.
+
+## To publish to other hosting services
+
+In addition to publishing content to Cloud, you can also publish to these other hosting services:
+
+1.  [Posit Connect](https://posit.co/products/enterprise/connect/)
+2.  [shinyapps.io](https://www.shinyapps.io/)
+3.  [RPubs](https://rpubs.com/)
+
+Consult the documentation for those services for details on how to publish to them.
+
+### Packages
+
+This template includes the following installed packages, among others:
+
+- [shiny](https://shiny.posit.co/)
+- [shinydashboard](https://rstudio.github.io/shinydashboard/)
+- [leaflet](https://rstudio.github.io/leaflet/)
+- [quarto](https://quarto.org/)
+- [tidyverse](https://tidyverse.tidyverse.org/) (meta-package)
+- [ggplot2](https://ggplot2.tidyverse.org/)
+- [dplyr](https://dplyr.tidyverse.org/)
+- [tidyr](https://tidyr.tidyverse.org/)
+- [readr](https://readr.tidyverse.org/)
+- [purrr](https://purrr.tidyverse.org/)
+- [tibble](https://tibble.tidyverse.org/)
+- [stringr](https://stringr.tidyverse.org/)
+- [forcats](https://forcats.tidyverse.org/)
+- [tidyr](https://tidyr.tidyverse.org/)
+
+Install additional packages as desired with `install.packages()`.
