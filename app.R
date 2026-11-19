@@ -188,28 +188,52 @@ navajo <- if (file.exists("data/navajo_nation.geojson")) {
   NULL
 }
 
-# --- Exp 2 versions (www/audio/exp2/<same name>_Full / _Vocal / _Instrumental) --
-exp2_dir      <- "www/audio/exp2"
+# --- Exp 2 versions (<same name>_Full / _Vocal / _Instrumental) ----------------
+# Looked for anywhere under www/audio (usually www/audio/exp2), so an extra
+# folder level from a zip or upload doesn't stop them being found. Names are
+# matched ignoring capitals, spaces and punctuation.
 version_names <- c("Full", "Vocal", "Instrumental")
-exp2_files    <- if (dir.exists(exp2_dir)) list.files(exp2_dir, pattern = "\\.mp3$", ignore.case = TRUE) else character(0)
+version_alias <- list(Full = c("full"), Vocal = c("vocal", "vocals"),
+                      Instrumental = c("instrumental", "instrumentals", "inst"))
+# Shiny only serves files inside www/, so a top-level exp2/ folder (where a
+# GitHub upload can put it) is served separately under the web path "exp2/"
+if (dir.exists("exp2")) addResourcePath("exp2", normalizePath("exp2"))
+list_mp3 <- function(dir) {
+  if (!dir.exists(dir)) return(character(0))
+  list.files(dir, pattern = "\\.mp3$", ignore.case = TRUE, recursive = TRUE)
+}
+# Web paths ("audio/..." or "exp2/...") and the matching paths on disk
+web_audio  <- c(file.path("audio", list_mp3("www/audio")), file.path("exp2", list_mp3("exp2")))
+disk_audio <- ifelse(startsWith(web_audio, "audio/"), file.path("www", web_audio), web_audio)
+all_audio  <- web_audio
+name_key   <- function(x) tolower(gsub("[^A-Za-z0-9]", "", tools::file_path_sans_ext(basename(x))))
+audio_keys <- name_key(all_audio)
 
-# For one song: named vector of version -> file name in exp2/, for the versions that exist
+# For one song: named vector of version -> web path, for the versions that exist
 find_versions <- function(audio_file) {
   if (is.na(audio_file) || audio_file == "") return(character(0))
-  stem   <- tools::file_path_sans_ext(audio_file)
-  wanted <- tolower(paste0(stem, "_", version_names, ".mp3"))
-  hit    <- match(wanted, tolower(exp2_files))
-  setNames(exp2_files[hit], version_names)[!is.na(hit)]
+  stem <- name_key(audio_file)
+  out  <- character(0)
+  for (v in version_names) {
+    hit <- match(paste0(stem, version_alias[[v]]), audio_keys)
+    hit <- hit[!is.na(hit)]
+    if (length(hit)) out[v] <- all_audio[hit[1]]
+  }
+  out
 }
 song_versions <- lapply(songs$audio_file, find_versions)
 
-if (length(exp2_files) > 0) {
-  used <- unlist(song_versions, use.names = FALSE)
-  stray <- setdiff(exp2_files, used)
+stem_files <- all_audio[grepl("(full|vocals?|instrumentals?|inst)$", audio_keys)]
+if (length(stem_files) == 0) {
+  warning("No Exp 2 recordings (names ending _Full, _Vocal or _Instrumental) found in www/audio or exp2.")
+} else {
+  message("Found ", length(stem_files), " Exp 2 recordings for ",
+          sum(lengths(song_versions) > 0), " songs.")
+  stray <- setdiff(stem_files, unlist(song_versions, use.names = FALSE))
   if (length(stray)) warning("Exp 2 files that don't match any song's file name: ",
                              paste(stray, collapse = ", "))
   no_versions <- songs$country[songs$in_exp2 & lengths(song_versions) == 0]
-  if (length(no_versions)) warning("Exp 2 songs with no Full/Vocal/Instrumental files yet: ",
+  if (length(no_versions)) warning("Exp 2 songs with no Full/Vocal/Instrumental files: ",
                                    paste(no_versions, collapse = ", "))
 }
 
@@ -266,7 +290,7 @@ version_switch <- function(audio_file, versions) {
     '<div class="version-switch" role="group" aria-label="Recording version">',
     btn("Exp 1", audio_src(file.path("audio", audio_file)), active = TRUE),
     '<span class="ver-label">Exp 2:</span>',
-    paste(vapply(names(versions), function(v) btn(v, audio_src(file.path("audio/exp2", versions[[v]]))),
+    paste(vapply(names(versions), function(v) btn(v, audio_src(versions[[v]])),
                  character(1)), collapse = ""),
     '</div>'
   )
@@ -603,7 +627,7 @@ server <- function(input, output, session) {
   output$dl_svg <- downloadHandler(
     filename = "GeoMusic_stimulus_map.svg",
     content = function(file) {
-      ggplot2::ggsave(file, make_figure(visible_groups()), device = "svg",
+      ggplot2::ggsave(file, make_figure(visible_groups()), device = svglite::svglite,
                       width = 12, height = 7.5)
     }
   )
@@ -648,13 +672,12 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       audio <- file.path("www/audio", songs$audio_file[!blank(songs$audio_file)])
-      audio <- c(audio, file.path(exp2_dir, unlist(song_versions, use.names = FALSE)))
+      audio <- c(audio, disk_audio[match(unlist(song_versions, use.names = FALSE), web_audio)])
       audio <- audio[file.exists(audio)]
       if (nzchar(Sys.which("zip"))) {
         utils::zip(file, audio, flags = "-j -q")
       } else {
-        old <- setwd("www/audio"); on.exit(setwd(old))
-        utils::tar(file, sub("^www/audio/", "", audio), compression = "gzip")
+        utils::tar(file, audio, compression = "gzip")
       }
     }
   )
