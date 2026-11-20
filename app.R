@@ -298,9 +298,6 @@ version_switch <- function(audio_file, versions) {
 
 make_popup <- function(row, versions = character(0)) {
   recording <- recording_text(row)
-  if (val(row$timestamp) != "") {
-    recording <- paste0(recording, if (recording != "") " \u2014 " else "", val(row$timestamp))
-  }
 
   # Playback bar; the map's JavaScript starts it automatically when the popup opens.
   # URLencode keeps characters like & and + in file names from breaking the link.
@@ -314,15 +311,16 @@ make_popup <- function(row, versions = character(0)) {
 
   sprintf(
     '<div class="song-popup">
-       %s%s%s
        <p class="song-country">%s</p>
+       %s%s%s%s
        <div class="song-icons">%s%s</div>
        %s
      </div>',
+    htmlEscape(val(row$country)),
     popup_line("Recording", recording),
+    popup_line("Time Stamps", val(row$timestamp)),
     popup_line("Genres", val(row$genre)),
     popup_line("Lyrics Language", val(row$language)),
-    htmlEscape(val(row$country)),
     icon_link(row$youtube_url, "youtube", "#ff0000", "Open on YouTube"),
     icon_link(row$spotify_url, "spotify", "#1db954", "Open on Spotify"),
     audio
@@ -463,7 +461,8 @@ app_css <- sprintf("
   .song-popup { min-width: 270px; max-width: 330px; font-size: 14px; }
   .song-line { margin: 0 0 6px; line-height: 1.4; }
   .song-label { font-weight: 600; color: #444; }
-  .song-country { margin: 8px 0 10px; font-weight: 600; font-size: 15px; }
+  .song-country { margin: 0 0 1.4em; font-weight: 600; font-size: 15px; }   /* blank line below */
+  .song-popup .song-line:last-of-type { margin-bottom: 10px; }
   .song-missing { color: #999; font-style: italic; }
   .song-icons { display: flex; gap: 14px; margin-bottom: 10px; }
   .song-icon { line-height: 0; border-radius: 6px; }
